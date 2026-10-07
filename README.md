@@ -61,3 +61,22 @@ npm install
 
 # Запустить режим разработки
 npm run dev
+Откройте http://localhost:3000 в браузере.
+
+🗺 Roadmap
+[x] MVP: создание вишлиста и динамические ссылки (/create, /blink)
+
+[x] Интеграция SPL Memo v2 для открыток
+
+[x] Поддержка Telegram Mini App (@Sol_Wish_bot)
+
+[ ] Поддержка SPL токенов и стейблкоинов (USDC, USDT)
+
+[ ] Краудфандинг на дорогие подарки (совместный сбор пулом)
+
+[ ] Памятные Soulbound cNFT-открытки для дарителя и получателя
+
+[ ] Верификация домена в реестре Dialect Actions Registry
+
+📄 Лицензия
+MIT © 2026 SolWish Team.

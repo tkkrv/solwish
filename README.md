@@ -1,82 +1,118 @@
-# SolWish ✨
-> *«Цветы завянут — SolWish нет»*
+# 🌸 SolWish — The Everlasting On-Chain Gifting Protocol
 
-**SolWish** — децентрализованный протокол вишлистов и социальных микроподарков на блокчейне Solana. Платформа позволяет создавать персонализированные списки желаний, делиться ими в виде автономных **Solana Blinks** в Twitter/X и Discord, а также взаимодействовать через **Telegram Mini App**. Дарители могут исполнять мечты в 1 клик с нулевой комиссией платформы и вечной памятной открыткой, запечатанной в блокчейн через SPL Memo.
-
----
-
-## 🔗 Быстрые ссылки
-
-- 🌐 **Live Demo (Web & Blink Player):** [https://solwish-theta.vercel.app](https://solwish-theta.vercel.app)
-- 📱 **Telegram Mini App:** [@Sol_Wish_bot](https://t.me/Sol_Wish_bot)
-- 🎁 **Создать вишлист:** [https://solwish-theta.vercel.app/create](https://solwish-theta.vercel.app/create)
-- ⚡ **Сеть:** Solana Devnet
-- 🏆 **Хакатон:** Colosseum Solana Hackathon
+> **"Flowers will fade, SolWish won’t."**  
+> SolWish is a decentralized, zero-fee social gifting protocol on Solana. It enables anyone to create interactive wishlists and receive direct P2P crypto gifts accompanied by permanent, immutable greeting cards recorded directly into the Solana ledger using the SPL Memo Program.
 
 ---
 
-## 💡 Проблема и Решение
+## 🌟 Overview & Key Problem
 
-| Проблема традиционных сервисов | Решение SolWish |
-| :--- | :--- |
-| **Высокие комиссии:** Сервисы сбора берут от 5% до 15% за вывод средств. | **0% Platform Fees:** 100% средств переводятся напрямую P2P на кошелек автора. |
-| **Забытые открытки:** Бумажные открытки теряются, а цветы увядают за 3 дня. | **Вечная ончейн-память:** Поздравление и имя дарителя навсегда вписаны в историю транзакции. |
-| **Сложный UX:** Необходимость регистрироваться, вводить номера карт и переходить по 10 ссылкам. | **1 клик в соцсетях:** Нативный Solana Blink прямо в ленте X/Twitter или Telegram Mini App. |
+Traditional social gifting platforms suffer from high middleman fees (often 5%–15%), delayed bank payouts, custodial risk, and transient greeting messages that get lost or deleted over time.
 
----
-
-## ⚡ Ключевые возможности
-
-1. **Zero Platform Fees (Pure P2P):**  
-   Прямой перевод SOL с кошелька дарителя на кошелек автора через `SystemProgram.transfer`. Никаких депозитных смарт-контрактов, холдов или шлюзов вывода.
-2. **Ончейн-открытка (SPL Memo Program v2):**  
-   Каждая транзакция параллельно прикрепляет структурированные данные (имя дарителя, текст пожелания, ID подарка) в инструкцию программы `MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`.
-3. **Omnichannel Web3 UX:**
-   - **Solana Actions & Blinks:** Спецификация `/api/actions/gift` и `actions.json` для разворачивания интерактивных виджетов в соцсетях.
-   - **Telegram Mini App:** Нативный запуск через `@Sol_Wish_bot` без выхода из мессенджера.
-   - **Standalone Web App:** Адаптивный веб-интерфейс с поддержкой Phantom и Solflare.
+**SolWish solves this by:**
+1. **Zero-Platform Fees & Instant P2P Settlement:** Funds transfer directly from the sender's wallet to the recipient's wallet with zero custodial risk or platform cuts.
+2. **Everlasting Greeting Cards (SPL Memo v2):** Greetings and metadata are embedded directly inside the Solana transaction payload, creating an unalterable, perpetual keepsake verifiable on Solana Explorer.
+3. **Solana Actions & Blinks Integration:** Wishlists are fully compatible with Solana Actions and Blinks, enabling 1-click gifting natively across Twitter/X, Discord, Telegram, and any Blink-supported surface.
 
 ---
 
-## 🛠 Архитектура и Стек
+## ✨ Features
 
-- **Frontend / Backend:** Next.js (App Router), TypeScript, Tailwind CSS
-- **Blockchain SDK:** `@solana/web3.js`, `@solana/actions`, `@solana/wallet-adapter`
-- **Solana Programs:**
-  - `System Program` — P2P расчеты
-  - `SPL Memo Program v2` (`MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`) — хранение метаданных открыток
-- **Деплой:** Vercel
+- **Decentralized Wishlist Creation:** Set up a dream item, target funding amount in SOL, and assign any Solana destination wallet.
+- **On-Chain Keepsake (SPL Memo):** Every contribution packages a `SystemProgram.transfer` alongside an `SPL Memo` instruction encoding a structured JSON greeting (`app`, `wishId`, `to`, `from`, `msg`, `date`).
+- **Dynamic Gifting & Custom Contributions:** Supporters can gift custom SOL amounts and write personalized wishes.
+- **Native Blink Viewer:** Standalone UI crafted in accordance with the Dialect Blink specification.
+- **Multilingual Support:** Fully localized for English, Russian, and Kazakh communities.
 
 ---
 
-## 🚀 Локальный запуск
+## 🏗️ Architecture & How It Works
 
-```bash
-# Клонировать репозиторий
-git clone [https://github.com/tkkrv/solwish.git](https://github.com/tkkrv/solwish.git)
+### Transaction Flow
+
+[ Giver / Supporter ]
+│
+▼
+[ Solana Action / Blink ]  ── (Sender Name, Message, Amount)
+│
+▼
+[ POST /api/actions/gift ] ──> Builds Solana Transaction:
+├── Ix 1: SystemProgram.transfer (Sender ➜ Recipient)
+└── Ix 2: SPL Memo Program (JSON greeting payload)
+│
+▼
+[ Wallet Signature (Phantom / Solflare) ]
+│
+▼
+[ Solana Devnet Ledger ] ────> Immutable, verifiable on Solana Explorer
+
+
+### SPL Memo On-Chain Payload
+Each gift embeds an indelible JSON record:
+```json
+{
+  "app": "SolWish",
+  "wishId": "wish_sample123",
+  "to": "Recipient Name",
+  "from": "Giver Name",
+  "msg": "Happy Birthday! Wishing you all the best!",
+  "date": "2026-10-08T18:45:48.588Z"
+}
+🛠️ Tech Stack
+Framework: Next.js (App Router, TypeScript)
+
+Styling: Tailwind CSS
+
+Blockchain & SDKs:
+
+@solana/web3.js
+
+@solana/wallet-adapter-react & @solana/wallet-adapter-react-ui
+
+@solana/actions
+
+SPL Memo Program v2: MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr
+
+Deployment: Vercel
+
+🚀 Getting Started Locally
+Prerequisites
+Node.js (v18 or higher recommended)
+
+A Solana wallet extension (e.g., Phantom or Solflare) set to Devnet.
+
+Installation
+Clone the repository:
+
+Bash
+git clone [https://github.com/](https://github.com/)<your-username>/solwish.git
 cd solwish
+Install dependencies:
 
-# Установить зависимости
+Bash
 npm install
+Configure Environment Variables:
+Create a .env.local file in the root directory (optional for Supabase storage):
 
-# Запустить режим разработки
+Фрагмент кода
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+Run the development server:
+
+Bash
 npm run dev
-Откройте http://localhost:3000 в браузере.
+Open http://localhost:3000 in your browser.
 
-🗺 Roadmap
-[x] MVP: создание вишлиста и динамические ссылки (/create, /blink)
+🧪 Testing on Solana Devnet
+Switch your Phantom / Solflare wallet network to Devnet.
 
-[x] Интеграция SPL Memo v2 для открыток
+Request Devnet SOL via solana airdrop 1 or an official Solana Devnet faucet.
 
-[x] Поддержка Telegram Mini App (@Sol_Wish_bot)
+Navigate to /create to generate a new Wishlist Blink.
 
-[ ] Поддержка SPL токенов и стейблкоинов (USDC, USDT)
+Open the generated Blink URL (/blink?id=...), enter your name, an on-chain note, and complete the transaction.
 
-[ ] Краудфандинг на дорогие подарки (совместный сбор пулом)
+Click "View in Solana Explorer" to inspect the confirmation and witness the SPL Memo greeting payload preserved on-chain.
 
-[ ] Памятные Soulbound cNFT-открытки для дарителя и получателя
-
-[ ] Верификация домена в реестре Dialect Actions Registry
-
-📄 Лицензия
-MIT © 2026 SolWish Team.
+📜 License
+Distributed under the MIT License. See LICENSE for more information.

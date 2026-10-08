@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev --webpack",
-  "build": "next build --webpack",
-  "start": "next start",
-  "lint": "next lint"
-},
-  "dependencies": {    "@solana/actions": "^1.6.6",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@solana/actions": "^1.6.6",
     "@solana/wallet-adapter-base": "^0.9.28",
     "@solana/wallet-adapter-react": "^0.15.40",
     "@solana/wallet-adapter-react-ui": "^0.9.40",
@@ -28,10 +29,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "autoprefixer": "^10.6.1",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
-    "tailwindcss": "^4",
+    "postcss": "^8.5.29",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5"
   }
 }

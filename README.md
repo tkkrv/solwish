@@ -33,7 +33,7 @@ Installation
 Clone the repository:
 
 Bash
-git clone [https://github.com/your-username/solwish.git](https://github.com/your-username/solwish.git)
+git clone [https://github.com/tkkrv/solwish.git](https://github.com/tkkrv/solwish.git)
 cd solwish
 Install dependencies:
 

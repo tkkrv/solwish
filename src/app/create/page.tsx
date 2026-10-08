@@ -1,162 +1,214 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import React, { useState } from 'react';
+import Navbar from '@/components/Navbar';
+import { useLanguage } from '@/context/LanguageContext';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 export default function CreateWishPage() {
+  const { t } = useLanguage();
   const { publicKey } = useWallet();
-  const [creatorName, setCreatorName] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [amountSol, setAmountSol] = useState("0.1");
-  const [iconUrl, setIconUrl] = useState("");
-  const [createdUrl, setCreatedUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!publicKey) {
-      alert("Сначала подключите ваш Phantom кошелек!");
-      return;
-    }
+  const [title, setTitle] = useState('');
+  const [amount, setAmount] = useState('');
+  const [recipient, setRecipient] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-    try {
-      setLoading(true);
-      const res = await fetch("/api/wishes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          creatorName,
-          title,
-          description,
-          amountSol: parseFloat(amountSol),
-          recipientWallet: publicKey.toBase58(),
-          iconUrl: iconUrl || "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=800",
-        }),
-      });
-
-      const data = await res.json();
-      if (data.wish) {
-        const blinkLink = `${window.location.origin}/blink?id=${data.wish.id}`;
-        setCreatedUrl(blinkLink);
-      }
-    } catch {
-      alert("Ошибка при создании желания");
-    } finally {
-      setLoading(false);
+  const handleUseMyWallet = () => {
+    if (publicKey) {
+      setRecipient(publicKey.toBase58());
     }
   };
 
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !amount || !recipient) return;
+
+    // Генерируем параметры для ссылки Blink
+    const params = new URLSearchParams({
+      title,
+      amount,
+      to: recipient,
+      ...(description ? { desc: description } : {}),
+      ...(imageUrl ? { img: imageUrl } : {}),
+    });
+
+    const blinkUrl = `${window.location.origin}/blink?${params.toString()}`;
+    setGeneratedLink(blinkUrl);
+  };
+
+  const handleCopy = () => {
+    if (!generatedLink) return;
+    navigator.clipboard.writeText(generatedLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
   return (
-    <div className="min-h-screen bg-[#0d0e15] text-white p-6 flex flex-col items-center justify-center font-sans">
-      <div className="w-full max-w-md bg-[#161822] border border-zinc-800 rounded-2xl p-6 shadow-2xl">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
-            Создать SolWish
+    <div className="min-h-screen bg-[#0b0c10] text-slate-100 relative">
+      <Navbar />
+
+      <main className="max-w-2xl mx-auto px-4 py-12">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-2">
+            {t.createTitle}
           </h1>
-          <WalletMultiButton style={{ height: "36px", fontSize: "12px", borderRadius: "10px" }} />
+          <p className="text-sm sm:text-base text-slate-400">
+            {t.createSubtitle}
+          </p>
         </div>
 
-        {!createdUrl ? (
-          <form onSubmit={handleCreate} className="flex flex-col gap-4">
-            <div>
-              <label className="text-xs text-zinc-400 block mb-1">Ваше имя / никнейм</label>
-              <input
-                type="text"
-                required
-                placeholder="Например: Айнура"
-                value={creatorName}
-                onChange={(e) => setCreatorName(e.target.value)}
-                className="w-full bg-[#0d0e15] border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-violet-500"
-              />
-            </div>
+        {/* Notice Card */}
+        <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs sm:text-sm text-purple-300 flex items-center gap-2 mb-6">
+          <span>⚡</span>
+          <span>{t.directP2PNotice}</span>
+        </div>
 
+        {!generatedLink ? (
+          <form onSubmit={handleCreate} className="space-y-5 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl">
+            {/* Title */}
             <div>
-              <label className="text-xs text-zinc-400 block mb-1">Название подарка</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                {t.itemTitleLabel} *
+              </label>
               <input
                 type="text"
                 required
-                placeholder="Например: Книга по Rust / Билет на хакатон"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-[#0d0e15] border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-violet-500"
+                placeholder={t.itemTitlePlaceholder}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-zinc-400 block mb-1">Сумма (SOL)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={amountSol}
-                  onChange={(e) => setAmountSol(e.target.value)}
-                  className="w-full bg-[#0d0e15] border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-violet-500"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-zinc-400 block mb-1">Фото (URL)</label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={iconUrl}
-                  onChange={(e) => setIconUrl(e.target.value)}
-                  className="w-full bg-[#0d0e15] border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-violet-500"
-                />
-              </div>
+            {/* Target Amount */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                {t.amountLabel} *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.001"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder={t.amountPlaceholder}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
+              />
             </div>
 
+            {/* Recipient Address */}
             <div>
-              <label className="text-xs text-zinc-400 block mb-1">Описание подарка</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  {t.recipientLabel} *
+                </label>
+                {publicKey && (
+                  <button
+                    type="button"
+                    onClick={handleUseMyWallet}
+                    className="text-xs text-emerald-400 hover:text-emerald-300 font-medium underline"
+                  >
+                    {t.useConnectedWallet}
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                required
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                placeholder={t.recipientPlaceholder}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-sm font-mono"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                {t.descriptionLabel}
+              </label>
               <textarea
-                rows={2}
-                placeholder="Поздравление или детали подарка..."
+                rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-[#0d0e15] border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-violet-500 resize-none"
+                placeholder={t.descriptionPlaceholder}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
+              />
+            </div>
+
+            {/* Image URL */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                {t.imageUrlLabel}
+              </label>
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder={t.imageUrlPlaceholder}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
               />
             </div>
 
             <button
               type="submit"
-              disabled={loading || !publicKey}
-              className="mt-2 w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-40 text-white font-medium text-sm py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/20"
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-500 hover:to-indigo-500 text-white font-bold transition-all shadow-lg shadow-purple-600/30 text-sm sm:text-base mt-2"
             >
-              {loading ? "Генерация Blink..." : publicKey ? "Сгенерировать Solana Blink" : "Сначала подключите кошелек"}
+              {t.submitCreateBtn}
             </button>
           </form>
         ) : (
-          <div className="flex flex-col gap-4 text-center">
-            <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-xl">
-              ✓
+          /* Result Card */
+          <div className="p-6 sm:p-8 rounded-2xl bg-white/[0.04] border border-emerald-500/30 backdrop-blur-xl text-center space-y-6">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-3xl mx-auto">
+              ✨
             </div>
-            <h2 className="text-lg font-bold">Блинк готов!</h2>
-            <p className="text-xs text-zinc-400">
-              Поделитесь ссылкой. Даритель сможет исполнить желание в 1 клик прямо на ваш кошелек.
-            </p>
-            <div className="bg-[#0d0e15] p-3 rounded-xl border border-zinc-800 break-all text-xs text-violet-400 font-mono">
-              {createdUrl}
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                {t.createdSuccessTitle}
+              </h2>
+              <p className="text-sm text-slate-400 max-w-md mx-auto">
+                {t.createdSuccessSubtitle}
+              </p>
             </div>
-            <div className="flex gap-2">
+
+            <div className="p-3 bg-black/40 rounded-xl border border-white/10 font-mono text-xs text-slate-300 break-all select-all">
+              {generatedLink}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={() => navigator.clipboard.writeText(createdUrl)}
-                className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-2.5 rounded-xl text-xs font-medium transition-colors"
+                onClick={handleCopy}
+                className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm transition-all"
               >
-                Скопировать
+                {copied ? t.copiedText : t.copyLinkBtn}
               </button>
               <a
-                href={createdUrl}
+                href={generatedLink}
                 target="_blank"
-                className="flex-1 bg-violet-600 hover:bg-violet-500 text-white py-2.5 rounded-xl text-xs font-medium text-center transition-colors"
+                rel="noopener noreferrer"
+                className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition-all flex items-center justify-center gap-1"
               >
-                Открыть →
+                <span>↗</span>
+                <span>{t.openBlinkBtn}</span>
               </a>
             </div>
+
+            <button
+              onClick={() => setGeneratedLink(null)}
+              className="text-xs text-slate-400 hover:text-white underline pt-2"
+            >
+              ← Создать еще одно желание
+            </button>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

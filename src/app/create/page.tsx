@@ -17,9 +17,9 @@ export default function CreateWishlistPage() {
 
   const [loading, setLoading] = useState(false);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [createdWishTitle, setCreatedWishTitle] = useState<string>('');
   const [copied, setCopied] = useState(false);
 
-  // Автозаполнение кошелька подключенного пользователя
   const handleUseMyWallet = () => {
     if (publicKey) {
       setRecipient(publicKey.toBase58());
@@ -51,6 +51,7 @@ export default function CreateWishlistPage() {
       if (data.success && data.wish?.id) {
         const blinkUrl = `${window.location.origin}/blink?id=${data.wish.id}`;
         setGeneratedLink(blinkUrl);
+        setCreatedWishTitle(title);
       } else {
         alert(data.error || 'Ошибка при создании вишлиста');
       }
@@ -69,6 +70,13 @@ export default function CreateWishlistPage() {
     }
   };
 
+  const shareOnTwitter = () => {
+    if (!generatedLink) return;
+    const tweetText = `I just created a Solana Blink wishlist: "${createdWishTitle}" on @SolWish!\n\nSend a gift with an everlasting on-chain greeting card on @solana:`;
+    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(generatedLink)}`;
+    window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="min-h-screen bg-[#0b0c10] text-slate-100 flex flex-col items-center justify-center p-4 selection:bg-purple-500 selection:text-white">
       <div className="w-full max-w-lg bg-[#12131a] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
@@ -85,7 +93,7 @@ export default function CreateWishlistPage() {
         </div>
 
         <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
-          {t?.heroTitle ? 'Create a Wishlist' : 'Create a Wishlist'}
+          Create a Wishlist
         </h1>
         <p className="text-sm text-slate-400 mb-6">
           Set up your wish, configure your target amount, and get a shareable Solana Blink.
@@ -183,14 +191,14 @@ export default function CreateWishlistPage() {
             </button>
           </form>
         ) : (
-          <div className="space-y-5 animate-in fade-in zoom-in-95 duration-200">
+          <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 text-center">
               <span className="text-2xl mb-2 block">🎉</span>
               <h3 className="text-base font-semibold text-white mb-1">
                 Your Wishlist Blink is Ready!
               </h3>
               <p className="text-xs text-slate-400">
-                Share this link anywhere. Supporters can fund it directly with an on-chain greeting note.
+                Share this link on X or Telegram. Friends can fund it and leave eternal on-chain notes.
               </p>
             </div>
 
@@ -198,21 +206,33 @@ export default function CreateWishlistPage() {
               {generatedLink}
             </div>
 
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={copyToClipboard}
-                className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-sm transition-colors"
+                className="py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs transition-colors"
               >
-                {copied ? '✓ Copied!' : 'Copy Blink Link'}
+                {copied ? '✓ Copied!' : 'Copy Link'}
               </button>
               <Link
                 href={generatedLink}
-                className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium text-sm transition-colors text-center"
+                className="py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium text-xs transition-colors text-center flex items-center justify-center gap-1"
               >
-                Open →
+                Open Blink →
               </Link>
             </div>
+
+            {/* Улучшение 3: Кнопка Share on X */}
+            <button
+              type="button"
+              onClick={shareOnTwitter}
+              className="w-full py-2.5 rounded-xl bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20"
+            >
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              Share on X (Twitter)
+            </button>
 
             <button
               type="button"
@@ -223,7 +243,7 @@ export default function CreateWishlistPage() {
                 setDescription('');
                 setIconUrl('');
               }}
-              className="w-full text-center text-xs text-slate-500 hover:text-slate-400 transition-colors py-2"
+              className="w-full text-center text-xs text-slate-500 hover:text-slate-400 transition-colors pt-2"
             >
               Create another wish
             </button>

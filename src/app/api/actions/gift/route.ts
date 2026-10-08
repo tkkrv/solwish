@@ -41,7 +41,9 @@ export async function GET(req: Request) {
       actions: [
         {
           label: `Подарить за ${wish.amountSol} SOL`,
-          href: `${baseHref}&amount=${wish.amountSol}&senderName={senderName}&message={message}`,
+          href: `${baseHref}&amount=${wish.amountSol}&to=${encodeURIComponent(
+            wish.creatorName
+          )}&senderName={senderName}&message={message}`,
           parameters: [
             {
               name: "senderName",
@@ -75,6 +77,9 @@ export async function POST(req: Request) {
     const senderName = url.searchParams.get("senderName") || "Друг";
     const message = url.searchParams.get("message") || "С наилучшими пожеланиями!";
     const amountSol = parseFloat(url.searchParams.get("amount") || String(wish.amountSol));
+    
+    // Получаем имя получателя из параметров запроса или объекта вишлиста
+    const recipientName = url.searchParams.get("to") || wish.creatorName || "Получатель";
 
     const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
 
@@ -87,7 +92,7 @@ export async function POST(req: Request) {
     const memoData = JSON.stringify({
       app: "SolWish",
       wishId: wish.id,
-      to: wish.creatorName,
+      to: recipientName,
       from: senderName,
       msg: message,
       date: new Date().toISOString(),

@@ -1,34 +1,24 @@
-'use client';
+import type { Metadata } from 'next';
+import './globals.css';
+import ClientProviders from '@/components/ClientProviders';
 
-import React, { useMemo } from 'react';
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl } from '@solana/web3.js';
-import { LanguageProvider } from '@/context/LanguageContext';
+export const metadata: Metadata = {
+  title: 'SolWish — Decentralized P2P Wishlists on Solana',
+  description: 'Flowers will fade, SolWish won’t. Zero-fee social gifting protocol powered by Solana Blinks & SPL Memo.',
+};
 
-// Импорт базовых стилей модалки Solana кошельков
-import '@solana/wallet-adapter-react-ui/styles.css';
-
-export default function ClientProviders({ children }: { children: React.ReactNode }) {
-  // Эндпоинт devnet кластера Solana
-  const endpoint = useMemo(() => clusterApiUrl('devnet'), []);
-
-  // Поддерживаемые кошельки
-  const wallets = useMemo(
-    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
-    []
-  );
-
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>
-          <LanguageProvider>
-            {children}
-          </LanguageProvider>
-        </WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+    <html lang="en">
+      <body className="bg-[#0b0c10] text-slate-100 min-h-screen selection:bg-purple-500 selection:text-white antialiased">
+        <ClientProviders>
+          {children}
+        </ClientProviders>
+      </body>
+    </html>
   );
 }

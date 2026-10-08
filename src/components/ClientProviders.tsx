@@ -7,14 +7,12 @@ import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adap
 import { clusterApiUrl } from '@solana/web3.js';
 import { LanguageProvider } from '@/context/LanguageContext';
 
-// Импорт базовых стилей модалки Solana кошельков
+// Стили кошелька Solana
 import '@solana/wallet-adapter-react-ui/styles.css';
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
-  // Эндпоинт devnet кластера Solana
   const endpoint = useMemo(() => clusterApiUrl('devnet'), []);
 
-  // Поддерживаемые кошельки
   const wallets = useMemo(
     () => [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
     []

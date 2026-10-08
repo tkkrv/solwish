@@ -1,120 +1,140 @@
 'use client';
 
 import React, { useState } from 'react';
-import Navbar from '@/components/Navbar';
-import { useLanguage } from '@/context/LanguageContext';
+import Link from 'next/link';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { useLanguage } from '@/context/LanguageContext';
 
-export default function CreateWishPage() {
-  const { t } = useLanguage();
+export default function CreateWishlistPage() {
   const { publicKey } = useWallet();
+  const { t } = useLanguage();
 
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState('');
   const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  
+  const [iconUrl, setIconUrl] = useState('');
+
+  const [loading, setLoading] = useState(false);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Автозаполнение кошелька подключенного пользователя
   const handleUseMyWallet = () => {
     if (publicKey) {
       setRecipient(publicKey.toBase58());
     }
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !amount || !recipient) return;
 
-    // Генерируем параметры для ссылки Blink
-    const params = new URLSearchParams({
-      title,
-      amount,
-      to: recipient,
-      ...(description ? { desc: description } : {}),
-      ...(imageUrl ? { img: imageUrl } : {}),
-    });
+    try {
+      setLoading(true);
 
-    const blinkUrl = `${window.location.origin}/blink?${params.toString()}`;
-    setGeneratedLink(blinkUrl);
+      const res = await fetch('/api/wishes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description: description || undefined,
+          amountSol: amount,
+          recipientWallet: recipient,
+          iconUrl: iconUrl || undefined,
+          creatorName: 'Creator',
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.wish?.id) {
+        const blinkUrl = `${window.location.origin}/blink?id=${data.wish.id}`;
+        setGeneratedLink(blinkUrl);
+      } else {
+        alert(data.error || 'Ошибка при создании вишлиста');
+      }
+    } catch (err: any) {
+      alert('Не удалось создать вишлист: ' + (err?.message || err));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCopy = () => {
-    if (!generatedLink) return;
-    navigator.clipboard.writeText(generatedLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+  const copyToClipboard = () => {
+    if (generatedLink) {
+      navigator.clipboard.writeText(generatedLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0c10] text-slate-100 relative">
-      <Navbar />
-
-      <main className="max-w-2xl mx-auto px-4 py-12">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-2">
-            {t.createTitle}
-          </h1>
-          <p className="text-sm sm:text-base text-slate-400">
-            {t.createSubtitle}
-          </p>
+    <div className="min-h-screen bg-[#0b0c10] text-slate-100 flex flex-col items-center justify-center p-4 selection:bg-purple-500 selection:text-white">
+      <div className="w-full max-w-lg bg-[#12131a] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+        <div className="mb-6 flex items-center justify-between">
+          <Link
+            href="/"
+            className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1"
+          >
+            ← {t?.navHome || 'Back to Home'}
+          </Link>
+          <span className="text-xs px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">
+            Solana Blink Creator
+          </span>
         </div>
 
-        {/* Notice Card */}
-        <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs sm:text-sm text-purple-300 flex items-center gap-2 mb-6">
-          <span>⚡</span>
-          <span>{t.directP2PNotice}</span>
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
+          {t?.heroTitle ? 'Create a Wishlist' : 'Create a Wishlist'}
+        </h1>
+        <p className="text-sm text-slate-400 mb-6">
+          Set up your wish, configure your target amount, and get a shareable Solana Blink.
+        </p>
 
         {!generatedLink ? (
-          <form onSubmit={handleCreate} className="space-y-5 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl">
-            {/* Title */}
+          <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                {t.itemTitleLabel} *
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                WHAT IS YOUR WISH / GIFT GOAL? *
               </label>
               <input
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={t.itemTitlePlaceholder}
+                placeholder="e.g. 1C Book, Birthday Fund, New Laptop"
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
               />
             </div>
 
-            {/* Target Amount */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                {t.amountLabel} *
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                TARGET AMOUNT (SOL) *
               </label>
               <input
                 type="number"
-                step="0.01"
-                min="0.001"
+                step="any"
+                min="0.0001"
                 required
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder={t.amountPlaceholder}
+                placeholder="1.0"
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
               />
             </div>
 
-            {/* Recipient Address */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  {t.recipientLabel} *
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  RECIPIENT SOLANA WALLET *
                 </label>
                 {publicKey && (
                   <button
                     type="button"
                     onClick={handleUseMyWallet}
-                    className="text-xs text-emerald-400 hover:text-emerald-300 font-medium underline"
+                    className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium"
                   >
-                    {t.useConnectedWallet}
+                    Use my wallet
                   </button>
                 )}
               </div>
@@ -123,92 +143,93 @@ export default function CreateWishPage() {
                 required
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
-                placeholder={t.recipientPlaceholder}
+                placeholder="Solana Wallet Address (e.g. CMRQ...)"
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-sm font-mono"
               />
             </div>
 
-            {/* Description */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                {t.descriptionLabel}
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                PERSONAL NOTE / STORY (OPTIONAL)
               </label>
               <textarea
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder={t.descriptionPlaceholder}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
+                placeholder="Tell your friends why this wish matters to you..."
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-sm resize-none"
               />
             </div>
 
-            {/* Image URL */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                {t.imageUrlLabel}
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                COVER IMAGE URL (OPTIONAL)
               </label>
               <input
                 type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder={t.imageUrlPlaceholder}
+                value={iconUrl}
+                onChange={(e) => setIconUrl(e.target.value)}
+                placeholder="https://images.unsplash.com/..."
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-sm"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-500 hover:to-indigo-500 text-white font-bold transition-all shadow-lg shadow-purple-600/30 text-sm sm:text-base mt-2"
+              disabled={loading}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium text-sm transition-all shadow-lg shadow-purple-600/20 active:scale-[0.99] disabled:opacity-50 mt-2"
             >
-              {t.submitCreateBtn}
+              {loading ? 'Creating Wishlist...' : 'Generate SolWish Blink'}
             </button>
           </form>
         ) : (
-          /* Result Card */
-          <div className="p-6 sm:p-8 rounded-2xl bg-white/[0.04] border border-emerald-500/30 backdrop-blur-xl text-center space-y-6">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-3xl mx-auto">
-              ✨
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">
-                {t.createdSuccessTitle}
-              </h2>
-              <p className="text-sm text-slate-400 max-w-md mx-auto">
-                {t.createdSuccessSubtitle}
+          <div className="space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 text-center">
+              <span className="text-2xl mb-2 block">🎉</span>
+              <h3 className="text-base font-semibold text-white mb-1">
+                Your Wishlist Blink is Ready!
+              </h3>
+              <p className="text-xs text-slate-400">
+                Share this link anywhere. Supporters can fund it directly with an on-chain greeting note.
               </p>
             </div>
 
-            <div className="p-3 bg-black/40 rounded-xl border border-white/10 font-mono text-xs text-slate-300 break-all select-all">
+            <div className="p-3 bg-black/40 border border-white/10 rounded-xl font-mono text-xs text-purple-300 break-all select-all">
               {generatedLink}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex gap-2">
               <button
-                onClick={handleCopy}
-                className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm transition-all"
+                type="button"
+                onClick={copyToClipboard}
+                className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-sm transition-colors"
               >
-                {copied ? t.copiedText : t.copyLinkBtn}
+                {copied ? '✓ Copied!' : 'Copy Blink Link'}
               </button>
-              <a
+              <Link
                 href={generatedLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition-all flex items-center justify-center gap-1"
+                className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium text-sm transition-colors text-center"
               >
-                <span>↗</span>
-                <span>{t.openBlinkBtn}</span>
-              </a>
+                Open →
+              </Link>
             </div>
 
             <button
-              onClick={() => setGeneratedLink(null)}
-              className="text-xs text-slate-400 hover:text-white underline pt-2"
+              type="button"
+              onClick={() => {
+                setGeneratedLink(null);
+                setTitle('');
+                setAmount('');
+                setDescription('');
+                setIconUrl('');
+              }}
+              className="w-full text-center text-xs text-slate-500 hover:text-slate-400 transition-colors py-2"
             >
-              ← Создать еще одно желание
+              Create another wish
             </button>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
